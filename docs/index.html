@@ -142,7 +142,7 @@ $.ajax({
 function getPM2_5(){
 var pm25;
 var StationName = document.getElementById("StationSelect").value; 
-var url2 = "//openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?"
+var url2 = "http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?"
 + "stationName=" + StationName
 +"&dataTerm=month&pageNo=1&numOfRows=1&ServiceKey=6zJ8HNpT83mIuTTFKyLkR9R8EP%2BJyscdoRcU9zpVCSkDYt4LJAiBpSwEpuR2SlmWAHxRwGdKtvhkOPDDwzGIpg%3D%3D&ver=1.3&_returnType=json";
 

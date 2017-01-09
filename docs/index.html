@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<head>
+<link crossorigin='anonymous' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css' integrity='sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u' rel='stylesheet'> </link>
+<!-- Dweet -->
+  <script src='http://dweet.io/client/dweet.io.min.js'/>
+<!-- JQuery -->
+<script src='http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'/>
+<!-- Bootstrap -->
+<!--<script crossorigin='anonymous' integrity='sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa' src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'/> -->
+<!--  cross origin plug-in -->
+<!-- <script src='jquery.xdomainajax.js'/>  -->
+
+<!-- Paho MQTT -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js' type='text/javascript'/>
+<!-- jQuert xdomainajax.js -->
+
+<!-- MathJax -->
+<script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML' type='text/javascript'>
+</script>
+</head>  
+<body>
+<p> MathJax Example </p>
+When $a \ne 0$, there are two solutions to \(ax^2 + bx + c = 0\) and they are
+$$x = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$
+<br />
+A script on this page starts this clock:<br />
+<div id="demo">
+</div>
+<br />
+<select id="StationSelect">
+  <option value="운중동">운중동</option>
+  <option value="성북구">성북구</option>
+  <option value="서초구">서초구</option>
+  <option value="중랑구">중랑구</option>
+</select>
+<br />
+<label>PM2.5 Value: </label> &nbsp;
+ <input id="PM2.5 Value" type="text" />
+<br />
+<label>Updated time: </label> &nbsp;
+<input id="PM2.5 updated time" type="textbox" />
+<br />
+<textarea cols="50" id="text Area" rows="4">PM2.5 공인측정소 측정치
+</textarea>
+<br />
+Click 'push button ' to get PM2.5 data &amp;Sigma<br />
+<div class="container">
+<button id="pm25button" onclick="getPM2_5()" type="button">Get PM2.5</button>
+</div>
+<br></br>
+<p>MQTT Client</P>
+<div>
+<button id="MQTTconnect" style="background-color:lightgreen" onclick="connect()" type="button">Connect to MQTT and subscribe...</button>
+<br></br>
+<h5> publish message to MQTT server </h5>
+<button id="MQTTpublish" style="background-color:lightblue" onclick="publish()" type="button">Publish MQTT message</button>
+</div>
+</body>
+
+<script>
+var myVar = setInterval(myTimer, 5000);
+var k=0;
+var data;
+
+var url1 = "https://dweet.io/dweet/for/ByoungThing-2?";
+
+function myTimer() {
+    var d = new Date();
+    k++;
+    data = {A : k, B : k+10};
+   // var data_json = JSON.stringify(data_str);
+    document.getElementById("demo").innerHTML = d.toLocaleTimeString();
+    dweetio.dweet_for("ByoungThing1", {"data":k}, function(err, dweet){
+    console.log(dweet.thing); // "my-thing"
+    console.log(dweet.content); // The content of the dweet
+    console.log(dweet.created); // The create date of the dweet
+  // postToURL(url1 ,data);
+  // getURL(url2);  
+  // pm();
+});
+}
+
+
+function postToURL(URL, payload){
+   
+    // server URL
+ 
+    //var URL = "https://dweet.io/dweet/for/ByoungThing-2?";
+
+   
+   console.log("POST msg sent...");
+ 
+          $.ajax({
+           url:URL,
+           data: payload, //{A: k+10, B: k},
+           type: "POST",
+           dataType: "JSON",
+           statusCode: {
+                     0: function (){
+ 
+                    console.log("Failed to write"); 
+                        //Success message
+                    },
+                    200: function (data){
+                      var list = data.list;
+                     console.log("response: ",data.list );  
+                     //console.log("success");
+                        //Success Message
+                    }
+                }
+            });
+ }
+
+function getURL(URL) {
+var pm25, dataTime;
+
+$.ajax({
+        type: "POST",
+        dataType: "json",
+        url: URL,
+        success: function(data){
+            console.log(data);
+            pm25 = data.list[0].pm25Value;
+            pm25_24h = data.list[0].pm25Value24;
+            dataTime = data.list[0].dataTime;
+            console.log("data time :", dataTime);   
+            console.log("pm25value: ",pm25); 
+
+            document.getElementById("PM2.5 Value").value = pm25;
+            document.getElementById("PM2.5 updated time").value = dataTime;
+            var str1 = "date:" + dataTime + "\\\n" + "PM25:" + pm25 + "\\\n" + "PM25(24H AVERAGE):" + pm25_24h;
+            document.getElementById("text Area").value = str1;
+        },
+        error: function(msg){
+            console.log("error contacting JSON server side component...");
+            console.log(msg);
+        }
+    });
+}
+
+function getPM2_5(){
+var pm25;
+var StationName = document.getElementById("StationSelect").value; 
+var url2 = "http://openapi.airkorea.or.kr/openapi/services/rest/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?"
++ "stationName=" + StationName
++"&dataTerm=month&pageNo=1&numOfRows=1&ServiceKey=6zJ8HNpT83mIuTTFKyLkR9R8EP%2BJyscdoRcU9zpVCSkDYt4LJAiBpSwEpuR2SlmWAHxRwGdKtvhkOPDDwzGIpg%3D%3D&ver=1.3&_returnType=json";
+
+getURL(url2);
+
+
+}
+
+
+//MQTT CLIENT
+// Create a client instance
+//var host = "ws://iot.eclipse.org:80/ws"; // web socket enabled host
+var host = "wss://iot.eclipse.org:443/ws" // web socket enabled host
+//var host = "ws://iot.eclipse.org/mqtt"; // web socket enabled host
+
+var port = 8883;
+var reconnectTimeout = 2000;
+path = "/mqtt";
+
+var clientID = "bgloh19690282033"  + new Date().getTime();
+
+var client = new Paho.MQTT.Client(host,clientID);
+
+// connection options
+ var willMsg = new Paho.MQTT.Message("Good Bye");
+ willMsg.destinationName = "Byoung/will";
+ var options = {
+            timeout: 3,
+            useSSL: false,
+            cleanSession: true,
+            willMessage: willMsg,
+            mqttVersion : 4,
+            onSuccess: onConnect,
+            onFailure: function (message) {
+                console.log("Connection failed: " + message.errorMessage + "Retrying");
+                setTimeout(MQTTconnect, reconnectTimeout);
+            }
+        };
+
+// set callback handlers
+client.onConnectionLost = onConnectionLost;
+client.onMessageArrived = onMessageArrived;
+
+
+
+// called when the client connects
+function onConnect() {
+  // Once a connection has been made, make a subscription and send a message.
+  var subscription = { topic : "hansung/rm229", qos : 0};
+  console.log("Successful connection is made.");
+  client.subscribe(subscription.topic,{qos: subscription.qos});
+  //message = new Paho.MQTT.Message("Hello");
+  //message.destinationName = "World";
+  //client.send(message);
+}
+
+
+// called when the client connects
+function publish() {
+  // Once a connection has been made, make a subscription and send a message.
+  var publishMessage = { topic : "rm100", message : "It is awesome !!", qos : 0};
+  message = new Paho.MQTT.Message(publishMessage.message);
+  message.destinationName = publishMessage.topic;
+  client.send(message);
+}
+
+// called when the client disconnects
+function disConnect() {
+console.log("disconnected !");
+}
+
+// called when the client loses its connection
+function onConnectionLost(responseObject) {
+  if (responseObject.errorCode !== 0) {
+    console.log("onConnectionLost:"+responseObject.errorMessage);
+  }
+}
+
+// called when a message arrives
+function onMessageArrived(message) {
+  console.log("onMessageArrived:"+message.payloadString);
+}
+function connect() {
+      // connect the client
+//client.connect({onSuccess:onConnect});
+client.connect(options);
+$("#connect").prop("disabled",true); // disable 'connect' button
+  }
+
+function disconnect() {
+      // disconnect the client
+client.disconnect({onSuccess:console.log("disconnected")});
+  }
+
+</script><br />
+<div>
+<span style="font-family: &quot;arial&quot;; font-size: 14.6667px; white-space: pre-wrap;"><br /></span></div>
+
+</html>
